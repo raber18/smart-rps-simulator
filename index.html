@@ -1,0 +1,3220 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智慧型剪刀石頭布同化模擬器 | Smart RPS Ecosystem Simulator</title>
+  <style>
+    :root {
+      --bg-base: #070b14;
+      --bg-surface: #0f1626;
+      --bg-card: #151e32;
+      --bg-card-hover: #1b2740;
+      --border-subtle: rgba(148, 163, 184, 0.16);
+      --border-strong: rgba(148, 163, 184, 0.3);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      --color-scissors: #FF6B6B;
+      --color-scissors-glow: rgba(255, 107, 107, 0.35);
+      --color-rock: #4D96FF;
+      --color-rock-glow: rgba(77, 150, 255, 0.35);
+      --color-paper: #6BCB77;
+      --color-paper-glow: rgba(107, 203, 119, 0.35);
+
+      --accent-cyan: #38bdf8;
+      --accent-danger: #ef4444;
+      --accent-amber: #f59e0b;
+      --radius-lg: 13px;
+      --radius-md: 9px;
+      --radius-sm: 7px;
+      --shadow-panel: 0 10px 28px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(77, 150, 255, 0.08), transparent 40%),
+        radial-gradient(circle at 85% 90%, rgba(255, 107, 107, 0.07), transparent 40%),
+        var(--bg-base);
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+      line-height: 1.4;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-shell {
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 10px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .svg-icon {
+      display: inline-block;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    /* Header */
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 8px 14px;
+      background: rgba(15, 22, 38, 0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-panel);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, rgba(255,107,107,0.18), rgba(77,150,255,0.18), rgba(107,203,119,0.18));
+      border: 1px solid var(--border-strong);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-sub {
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-left: auto;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .status-pill.running {
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .status-pill.running .status-dot {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulseDot 1.4s infinite;
+    }
+
+    .status-pill.shrinking {
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.55);
+      background: rgba(239, 68, 68, 0.16);
+    }
+    .status-pill.shrinking .status-dot {
+      background: #ef4444;
+      box-shadow: 0 0 10px #ef4444;
+      animation: pulseDot 0.7s infinite;
+    }
+
+    .status-pill.paused {
+      color: #fcd34d;
+      border-color: rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.12);
+    }
+    .status-pill.paused .status-dot { background: #f59e0b; }
+
+    .status-pill.finished {
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+    }
+    .status-pill.finished .status-dot { background: #3b82f6; }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.3); }
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .icon-btn:hover { background: var(--bg-card-hover); border-color: var(--accent-cyan); }
+    .icon-btn:active { transform: scale(0.97); }
+    .icon-btn.muted { color: var(--text-muted); border-color: var(--border-subtle); }
+
+    /* Top Dashboard */
+    .dashboard-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 9px 14px;
+      box-shadow: var(--shadow-panel);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 7px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--stat-accent, var(--accent-cyan));
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .stat-label-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .stat-value {
+      font-size: 1.24rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .stat-sub {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .stat-card.timer-warning {
+      border-color: rgba(239, 68, 68, 0.55);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.14), var(--bg-card));
+    }
+    .stat-card.timer-warning .stat-value { color: #fca5a5; }
+
+    /* Dynamic Trio Bar */
+    .ratio-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ratio-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+    }
+
+    .ratio-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ratio-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .ratio-track {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      background: #0a0f1d;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      display: flex;
+    }
+
+    .ratio-seg {
+      height: 100%;
+      transition: width 0.12s linear;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: rgba(7, 11, 20, 0.9);
+      overflow: hidden;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .ratio-seg.scissors { background: linear-gradient(180deg, #ff8585, var(--color-scissors)); }
+    .ratio-seg.rock { background: linear-gradient(180deg, #6ba8ff, var(--color-rock)); }
+    .ratio-seg.paper { background: linear-gradient(180deg, #84db8e, var(--color-paper)); }
+
+    /* Main Workspace Layout */
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 365px;
+      gap: 12px;
+      align-items: start;
+    }
+
+    /* Arena Column */
+    .arena-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .arena-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-panel);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .canvas-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .mode-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #bae6fd;
+      font-weight: 600;
+    }
+
+    .rules-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .rule-pair {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .canvas-frame {
+      position: relative;
+      width: min(100%, max(480px, calc((100vh - 348px) * 1.5)));
+      margin: 0 auto;
+      aspect-ratio: 3 / 2;
+      background: #080d1a;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.65);
+    }
+
+    #simCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: default;
+    }
+    #simCanvas.mode-drop { cursor: crosshair; }
+    #simCanvas.mode-wall { cursor: cell; }
+
+    .canvas-overlay-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: rgba(239, 68, 68, 0.22);
+      border: 1px solid rgba(239, 68, 68, 0.65);
+      color: #fecaca;
+      font-size: 0.76rem;
+      font-weight: 700;
+      pointer-events: none;
+      display: none;
+      backdrop-filter: blur(4px);
+    }
+    .canvas-overlay-badge.visible {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      animation: pulseBadge 1.2s infinite;
+    }
+    .badge-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+    }
+    @keyframes pulseBadge {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 14px 2px rgba(239, 68, 68, 0.45); }
+    }
+
+    /* God-Hand Intervention Bar */
+    .godhand-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 9px 12px;
+      box-shadow: var(--shadow-panel);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-desc {
+      font-size: 0.73rem;
+      color: var(--text-secondary);
+    }
+
+    .tool-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .tool-btn {
+      flex: 1 1 auto;
+      min-width: 104px;
+      padding: 6px 9px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 0.79rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+
+    .tool-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+    }
+
+    .tool-btn.active {
+      color: var(--text-primary);
+      background: rgba(56, 189, 248, 0.16);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+    }
+
+    .tool-btn[data-mode="drop-scissors"].active {
+      background: rgba(255, 107, 107, 0.18);
+      border-color: var(--color-scissors);
+      box-shadow: 0 0 0 1px var(--color-scissors-glow);
+    }
+    .tool-btn[data-mode="drop-rock"].active {
+      background: rgba(77, 150, 255, 0.18);
+      border-color: var(--color-rock);
+      box-shadow: 0 0 0 1px var(--color-rock-glow);
+    }
+    .tool-btn[data-mode="drop-paper"].active {
+      background: rgba(107, 203, 119, 0.18);
+      border-color: var(--color-paper);
+      box-shadow: 0 0 0 1px var(--color-paper-glow);
+    }
+    .tool-btn[data-mode="wall"].active {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: var(--accent-amber);
+      box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.35);
+    }
+
+    .btn-danger-outline {
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-size: 0.79rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-danger-outline:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--accent-danger);
+    }
+    .btn-danger-outline:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    /* Right Control Panel (Compact vertical padding for 1080p zero-scroll fit) */
+    .control-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-panel);
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .panel-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 9px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      transition: opacity 0.2s ease;
+    }
+
+    /* Flow Buttons & Keycap Hints */
+    .flow-actions {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 7px;
+    }
+
+    .kbd-hint {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.67rem;
+      font-weight: 700;
+      line-height: 1.25;
+      background: rgba(7, 11, 20, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      color: rgba(255, 255, 255, 0.92);
+      letter-spacing: 0.02em;
+    }
+
+    .btn-secondary .kbd-hint,
+    .icon-btn .kbd-hint,
+    .tool-btn .kbd-hint {
+      background: rgba(7, 11, 20, 0.58);
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+    }
+
+    .tool-btn.active .kbd-hint {
+      border-color: rgba(255, 255, 255, 0.32);
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      color: #fff;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 5px 14px rgba(14, 165, 233, 0.28);
+      transition: filter 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary.paused-style {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      box-shadow: 0 5px 14px rgba(245, 158, 11, 0.26);
+    }
+    .btn-primary.resume-style {
+      background: linear-gradient(135deg, #059669, #10b981);
+      box-shadow: 0 5px 14px rgba(16, 185, 129, 0.26);
+    }
+
+    .btn-secondary {
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      background: rgba(148, 163, 184, 0.12);
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-secondary:hover { background: rgba(148, 163, 184, 0.22); }
+    .btn-secondary:active { transform: scale(0.98); }
+
+    /* Prediction Bet */
+    .bet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .bet-btn {
+      padding: 6px 5px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s;
+    }
+    .bet-btn:hover:not(:disabled) {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+    .bet-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+    }
+    .bet-btn.selected:disabled {
+      opacity: 0.78;
+    }
+    .bet-btn.selected.scissors {
+      color: #fff;
+      background: rgba(255, 107, 107, 0.2);
+      border-color: var(--color-scissors);
+      box-shadow: 0 0 12px var(--color-scissors-glow);
+    }
+    .bet-btn.selected.rock {
+      color: #fff;
+      background: rgba(77, 150, 255, 0.2);
+      border-color: var(--color-rock);
+      box-shadow: 0 0 12px var(--color-rock-glow);
+    }
+    .bet-btn.selected.paper {
+      color: #fff;
+      background: rgba(107, 203, 119, 0.2);
+      border-color: var(--color-paper);
+      box-shadow: 0 0 12px var(--color-paper-glow);
+    }
+
+    /* Sliders & Lockable State */
+    .panel-block.bet-locked .bet-grid {
+      cursor: not-allowed;
+    }
+
+    .panel-block.sliders-locked .slider-group {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .panel-block.bet-locked,
+    .panel-block.sliders-locked {
+      border-color: rgba(148, 163, 184, 0.12);
+    }
+
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: opacity 0.2s ease;
+    }
+
+    .slider-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+    }
+
+    .slider-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .slider-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: rgba(15, 22, 38, 0.8);
+      padding: 1px 6px;
+      border-radius: 5px;
+      border: 1px solid var(--border-subtle);
+      font-size: 0.74rem;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: #0a0f1d;
+      outline: none;
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+    }
+    input[type="range"]:disabled {
+      cursor: not-allowed;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--thumb-color, var(--accent-cyan));
+      border: 2px solid #f8fafc;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      transition: transform 0.12s;
+    }
+    input[type="range"]:not(:disabled)::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    input[type="range"]:disabled::-webkit-slider-thumb {
+      cursor: not-allowed;
+      background: var(--text-muted);
+      border-color: #94a3b8;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--thumb-color, var(--accent-cyan));
+      border: 2px solid #f8fafc;
+      cursor: pointer;
+    }
+    input[type="range"]:disabled::-moz-range-thumb {
+      cursor: not-allowed;
+      background: var(--text-muted);
+    }
+
+    .slider-scissors { --thumb-color: var(--color-scissors); }
+    .slider-rock { --thumb-color: var(--color-rock); }
+    .slider-paper { --thumb-color: var(--color-paper); }
+
+    /* Speed Segmented Control */
+    .speed-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .speed-pills {
+      display: inline-flex;
+      background: #0a0f1d;
+      padding: 2px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      gap: 2px;
+    }
+
+    .speed-btn {
+      padding: 4px 11px;
+      border: none;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .speed-btn.active {
+      background: var(--accent-cyan);
+      color: #070b14;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      padding-top: 1px;
+    }
+
+    .checkbox-row input {
+      accent-color: var(--accent-cyan);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .mini-note {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .mini-note.locked {
+      color: #fcd34d;
+    }
+
+    /* Victory Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 15, 0.78);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+    .modal-backdrop.open {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 660px;
+      max-height: 94vh;
+      overflow-y: auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .champion-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+    }
+
+    .champion-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .champion-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .champion-sub {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .result-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .metric-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .metric-box .label { font-size: 0.73rem; color: var(--text-secondary); }
+    .metric-box .val {
+      font-size: 1.02rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .bet-outcome.win { color: #4ade80; }
+    .bet-outcome.lose { color: #f87171; }
+    .bet-outcome.none { color: var(--text-secondary); }
+
+    .chart-box {
+      background: #0a0f1d;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    #historyChart {
+      width: 100%;
+      height: clamp(145px, 24vh, 195px);
+      display: block;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 1060px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      .canvas-frame {
+        width: 100%;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell { padding: 10px 10px 20px; }
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .result-metrics {
+        grid-template-columns: 1fr;
+      }
+      .brand-title { font-size: 0.98rem; }
+      .tool-btn { min-width: calc(50% - 4px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg class="svg-icon" width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 4.2L19 16.5H5L12 4.2Z" stroke="#94a3b8" stroke-width="1.5" stroke-linejoin="round" opacity="0.55"/>
+            <circle cx="12" cy="4.5" r="2.8" fill="#FF6B6B"/>
+            <circle cx="18.8" cy="16.5" r="2.8" fill="#6BCB77"/>
+            <circle cx="5.2" cy="16.5" r="2.8" fill="#4D96FF"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">智慧型剪刀石頭布同化模擬器</div>
+          <div class="brand-sub">Smart RPS Ecosystem Simulator</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div id="statusPill" class="status-pill">
+          <span class="status-dot"></span>
+          <span id="statusText">準備就緒</span>
+        </div>
+        <button id="muteBtn" class="icon-btn" type="button" title="切換同化音效 (M)">
+          <span id="muteIcon" class="svg-wrap">
+            <svg class="svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+          </span>
+          <span id="muteLabel">音效開啟</span>
+          <kbd class="kbd-hint">M</kbd>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Battle Dashboard -->
+    <section class="dashboard-panel" aria-label="戰況儀表板">
+      <div class="stats-grid">
+        <div id="timerCard" class="stat-card" style="--stat-accent: var(--accent-cyan);">
+          <div class="stat-label">
+            <span class="stat-label-main">經過時間</span>
+            <span id="shrinkTag" class="stat-sub">30s 後縮圈</span>
+          </div>
+          <div class="stat-value">
+            <span id="elapsedDisplay">0.0</span>
+            <span class="stat-sub">秒</span>
+          </div>
+        </div>
+
+        <div class="stat-card" style="--stat-accent: var(--accent-amber);">
+          <div class="stat-label">
+            <span class="stat-label-main">總同化次數</span>
+            <span class="stat-sub">累計轉換</span>
+          </div>
+          <div class="stat-value">
+            <span id="assimDisplay">0</span>
+            <span class="stat-sub">次</span>
+          </div>
+        </div>
+
+        <div class="stat-card" style="--stat-accent: var(--color-scissors);">
+          <div class="stat-label">
+            <span class="stat-label-main">
+              <span class="faction-svg-slot" data-faction="scissors" data-size="16"></span>
+              <span>剪刀存活</span>
+            </span>
+            <span class="stat-sub">剋制布</span>
+          </div>
+          <div class="stat-value" style="color: var(--color-scissors);">
+            <span id="countScissors">25</span>
+            <span id="pctScissors" class="stat-sub">33%</span>
+          </div>
+        </div>
+
+        <div class="stat-card" style="--stat-accent: var(--color-rock);">
+          <div class="stat-label">
+            <span class="stat-label-main">
+              <span class="faction-svg-slot" data-faction="rock" data-size="16"></span>
+              <span>石頭存活</span>
+            </span>
+            <span class="stat-sub">剋制剪刀</span>
+          </div>
+          <div class="stat-value" style="color: var(--color-rock);">
+            <span id="countRock">25</span>
+            <span id="pctRock" class="stat-sub">33%</span>
+          </div>
+        </div>
+
+        <div class="stat-card" style="--stat-accent: var(--color-paper);">
+          <div class="stat-label">
+            <span class="stat-label-main">
+              <span class="faction-svg-slot" data-faction="paper" data-size="16"></span>
+              <span>布存活</span>
+            </span>
+            <span class="stat-sub">剋制石頭</span>
+          </div>
+          <div class="stat-value" style="color: var(--color-paper);">
+            <span id="countPaper">25</span>
+            <span id="pctPaper" class="stat-sub">33%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic 3-color Population Ratio Bar -->
+      <div class="ratio-bar-wrap">
+        <div class="ratio-bar-header">
+          <span>三色即時兵力佔比</span>
+          <div class="ratio-legend">
+            <span><i class="legend-dot" style="background: var(--color-scissors);"></i>剪刀 <strong id="legendS">25</strong></span>
+            <span><i class="legend-dot" style="background: var(--color-rock);"></i>石頭 <strong id="legendR">25</strong></span>
+            <span><i class="legend-dot" style="background: var(--color-paper);"></i>布 <strong id="legendP">25</strong></span>
+          </div>
+        </div>
+        <div class="ratio-track" role="progressbar" aria-label="三陣營兵力佔比">
+          <div id="barScissors" class="ratio-seg scissors" style="width: 33.33%;">33%</div>
+          <div id="barRock" class="ratio-seg rock" style="width: 33.33%;">33%</div>
+          <div id="barPaper" class="ratio-seg paper" style="width: 33.34%;">33%</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+      <!-- Left: Interactive Canvas + God Hand -->
+      <div class="arena-column">
+        <section class="arena-card" aria-label="生態模擬戰場">
+          <div class="canvas-topbar">
+            <div id="modeIndicator" class="mode-indicator"></div>
+            <div class="rules-hint">
+              <span>相剋：</span>
+              <span class="rule-pair"><span class="faction-svg-slot" data-faction="scissors" data-size="14"></span> 勝 <span class="faction-svg-slot" data-faction="paper" data-size="14"></span></span>
+              <span>・</span>
+              <span class="rule-pair"><span class="faction-svg-slot" data-faction="paper" data-size="14"></span> 勝 <span class="faction-svg-slot" data-faction="rock" data-size="14"></span></span>
+              <span>・</span>
+              <span class="rule-pair"><span class="faction-svg-slot" data-faction="rock" data-size="14"></span> 勝 <span class="faction-svg-slot" data-faction="scissors" data-size="14"></span></span>
+            </div>
+          </div>
+
+          <div class="canvas-frame">
+            <canvas id="simCanvas"></canvas>
+            <div id="shrinkCanvasBadge" class="canvas-overlay-badge">
+              <span class="badge-pulse-dot"></span>
+              <span>殘局縮圈啟動中 — 迫使中央決戰</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Player Real-Time Intervention (God Hand) -->
+        <section class="godhand-card" aria-label="玩家即時干預（上帝之手）">
+          <div class="section-head">
+            <div class="section-title">
+              <svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 11V6a2 2 0 0 0-4 0v5"></path>
+                <path d="M14 10V4a2 2 0 0 0-4 0v6"></path>
+                <path d="M10 10.5V6a2 2 0 0 0-4 0v8"></path>
+                <path d="M6 14v-1a2 2 0 0 0-4 0v3a6 6 0 0 0 6 6h4a6 6 0 0 0 6-6v-5a2 2 0 0 0-4 0"></path>
+              </svg>
+              <span>上帝之手（玩家即時干預）</span>
+            </div>
+            <div class="section-desc">點擊按鈕或按鍵盤 1–4 切換模式：點擊畫布空投 3 單位，或拖曳繪製牆壁</div>
+          </div>
+          <div class="tool-row">
+            <button class="tool-btn active" type="button" data-mode="observe">
+              <svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span>觀察模式</span>
+            </button>
+            <button class="tool-btn" type="button" data-mode="drop-scissors">
+              <span class="faction-svg-slot" data-faction="scissors" data-size="15"></span>
+              <span>空投剪刀 (+3)</span>
+              <kbd class="kbd-hint">1</kbd>
+            </button>
+            <button class="tool-btn" type="button" data-mode="drop-rock">
+              <span class="faction-svg-slot" data-faction="rock" data-size="15"></span>
+              <span>空投石頭 (+3)</span>
+              <kbd class="kbd-hint">2</kbd>
+            </button>
+            <button class="tool-btn" type="button" data-mode="drop-paper">
+              <span class="faction-svg-slot" data-faction="paper" data-size="15"></span>
+              <span>空投布 (+3)</span>
+              <kbd class="kbd-hint">3</kbd>
+            </button>
+            <button class="tool-btn" type="button" data-mode="wall">
+              <svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="12" y1="4" x2="12" y2="12"></line>
+                <line x1="8" y1="12" x2="8" y2="20"></line>
+                <line x1="16" y1="12" x2="16" y2="20"></line>
+              </svg>
+              <span>繪製障礙牆</span>
+              <kbd class="kbd-hint">4</kbd>
+            </button>
+            <button id="clearWallsBtn" class="btn-danger-outline" type="button" disabled>
+              <svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                <path d="M10 11v6M14 11v6"></path>
+              </svg>
+              <span>清除障礙牆 (<span id="wallCount">0</span>)</span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right: Control & Parameter Panel -->
+      <aside class="control-panel" aria-label="控制與參數設定面板">
+        <!-- Flow Control -->
+        <div class="panel-block">
+          <div class="section-head">
+            <div class="section-title">
+              <svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>模擬流程控制</span>
+            </div>
+            <span class="mini-note">快捷鍵 Space / R / M / 1–4</span>
+          </div>
+          <div class="flow-actions">
+            <button id="startPauseBtn" class="btn-primary" type="button">
+              <span id="startPauseIcon"></span>
+              <span id="startPauseLabel">開始模擬</span>
+              <kbd class="kbd-hint">Space</kbd>
+            </button>
+            <button id="resetBtn" class="btn-secondary" type="button">
+              <svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>重置</span>
+              <kbd class="kbd-hint">R</kbd>
+            </button>
+          </div>
+        </div>
+
+        <!-- Opening Prediction -->
+        <div id="betBlock" class="panel-block">
+          <div class="section-head">
+            <div class="section-title">
+              <svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <circle cx="12" cy="12" r="5"></circle>
+                <circle cx="12" cy="12" r="1.5" fill="#f59e0b"></circle>
+              </svg>
+              <span>開局預測押寶</span>
+            </div>
+            <span id="betStatusText" class="mini-note">開局前可點擊預測霸主</span>
+          </div>
+          <div class="bet-grid">
+            <button class="bet-btn scissors" type="button" data-bet="scissors">
+              <span class="faction-svg-slot" data-faction="scissors" data-size="22"></span>
+              <span>剪刀派</span>
+            </button>
+            <button class="bet-btn rock" type="button" data-bet="rock">
+              <span class="faction-svg-slot" data-faction="rock" data-size="22"></span>
+              <span>石頭派</span>
+            </button>
+            <button class="bet-btn paper" type="button" data-bet="paper">
+              <span class="faction-svg-slot" data-faction="paper" data-size="22"></span>
+              <span>布派</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Initial Counts -->
+        <div id="initCountsBlock" class="panel-block">
+          <div class="section-head">
+            <div class="section-title">
+              <svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="21" x2="4" y2="14"></line>
+                <line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line>
+                <line x1="20" y1="12" x2="20" y2="3"></line>
+                <line x1="1" y1="14" x2="7" y2="14"></line>
+                <line x1="9" y1="8" x2="15" y2="8"></line>
+                <line x1="17" y1="16" x2="23" y2="16"></line>
+              </svg>
+              <span>初始兵力數量（5 ~ 60）</span>
+            </div>
+            <span id="countApplyNote" class="mini-note">即時預覽中</span>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span class="slider-name" style="color: var(--color-scissors);">
+                <span class="faction-svg-slot" data-faction="scissors" data-size="14"></span>
+                <span>剪刀初始數量</span>
+              </span>
+              <span id="initValScissors" class="slider-val">25</span>
+            </div>
+            <input id="initScissors" class="slider-scissors" type="range" min="5" max="60" value="25" />
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span class="slider-name" style="color: var(--color-rock);">
+                <span class="faction-svg-slot" data-faction="rock" data-size="14"></span>
+                <span>石頭初始數量</span>
+              </span>
+              <span id="initValRock" class="slider-val">25</span>
+            </div>
+            <input id="initRock" class="slider-rock" type="range" min="5" max="60" value="25" />
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span class="slider-name" style="color: var(--color-paper);">
+                <span class="faction-svg-slot" data-faction="paper" data-size="14"></span>
+                <span>布初始數量</span>
+              </span>
+              <span id="initValPaper" class="slider-val">25</span>
+            </div>
+            <input id="initPaper" class="slider-paper" type="range" min="5" max="60" value="25" />
+          </div>
+        </div>
+
+        <!-- Physics & Simulation Parameters -->
+        <div class="panel-block">
+          <div class="section-title">
+            <svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1.02 1.4 1.09H21a2 2 0 1 1 0 4h-.09c-.63.07-1.14.49-1.51 1.09z"></path>
+            </svg>
+            <span>物理與 AI 行為參數</span>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span class="slider-name">移動速度</span>
+              <span id="speedValLabel" class="slider-val">120 px/s</span>
+            </div>
+            <input id="moveSpeedSlider" type="range" min="40" max="240" step="5" value="120" />
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span class="slider-name">AI 感知半徑</span>
+              <span id="senseValLabel" class="slider-val">135 px</span>
+            </div>
+            <input id="senseRadiusSlider" type="range" min="30" max="260" step="5" value="135" />
+          </div>
+
+          <div class="speed-row">
+            <span class="slider-name" style="font-size: 0.78rem;">播放倍速</span>
+            <div class="speed-pills" role="group" aria-label="播放倍速">
+              <button class="speed-btn active" type="button" data-speed="1">1x</button>
+              <button class="speed-btn" type="button" data-speed="2">2x</button>
+              <button class="speed-btn" type="button" data-speed="4">4x</button>
+            </div>
+          </div>
+
+          <label class="checkbox-row">
+            <span>顯示 AI 感知半徑圓圈（輔助觀察）</span>
+            <input id="showSenseToggle" type="checkbox" />
+          </label>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Victory Settlement Modal -->
+  <div id="victoryModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="victoryTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="section-title" style="font-size: 0.96rem; color: var(--text-secondary);">
+          <svg class="svg-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+          </svg>
+          <span>生態系統終局結算</span>
+        </div>
+        <button id="closeModalBtn" class="icon-btn" type="button">
+          <svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>檢視戰場</span>
+        </button>
+      </div>
+
+      <div id="championBanner" class="champion-banner">
+        <div id="championBadge" class="champion-badge"></div>
+        <div>
+          <div id="victoryTitle" class="champion-title">剪刀派統一全場！</div>
+          <div id="victorySubtitle" class="champion-sub">生態圈達成單一陣營霸權</div>
+        </div>
+      </div>
+
+      <div class="result-metrics">
+        <div class="metric-box">
+          <span class="label">總耗時</span>
+          <span id="resTime" class="val">0.0 秒</span>
+        </div>
+        <div class="metric-box">
+          <span class="label">總同化次數</span>
+          <span id="resAssim" class="val">0 次</span>
+        </div>
+        <div class="metric-box">
+          <span class="label">開局押寶結果</span>
+          <span id="resBet" class="val bet-outcome none">未押寶</span>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-header">
+          <span class="section-title" style="font-size: 0.82rem; color: var(--text-secondary);">
+            <svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>三陣營兵力數量隨時間變化折線圖</span>
+          </span>
+          <div class="ratio-legend">
+            <span><i class="legend-dot" style="background: var(--color-scissors);"></i>剪刀</span>
+            <span><i class="legend-dot" style="background: var(--color-rock);"></i>石頭</span>
+            <span><i class="legend-dot" style="background: var(--color-paper);"></i>布</span>
+          </div>
+        </div>
+        <canvas id="historyChart"></canvas>
+      </div>
+
+      <div class="modal-footer">
+        <button id="playAgainBtn" class="btn-primary" type="button">
+          <svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          <span>再來一局</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /* ===========================
+         Constants & Faction Config
+         =========================== */
+      const LOGICAL_W = 840;
+      const LOGICAL_H = 560;
+      const UNIT_RADIUS = 13;
+      const WALL_HALF_WIDTH = 4;
+      const SHRINK_START_TIME = 30.0;
+      const SHRINK_DURATION = 42.0;
+      const MIN_SAFE_RADIUS = 44;
+      const MAX_SAFE_RADIUS = Math.hypot(LOGICAL_W / 2, LOGICAL_H / 2);
+
+      const FACTIONS = {
+        scissors: {
+          id: "scissors",
+          name: "剪刀",
+          color: "#FF6B6B",
+          glow: "rgba(255, 107, 107, 0.48)",
+          brightGlow: "rgba(255, 135, 135, 0.85)",
+          darkFill: "rgba(255, 107, 107, 0.16)",
+          beats: "paper",
+          losesTo: "rock",
+        },
+        rock: {
+          id: "rock",
+          name: "石頭",
+          color: "#4D96FF",
+          glow: "rgba(77, 150, 255, 0.48)",
+          brightGlow: "rgba(115, 178, 255, 0.85)",
+          darkFill: "rgba(77, 150, 255, 0.16)",
+          beats: "scissors",
+          losesTo: "paper",
+        },
+        paper: {
+          id: "paper",
+          name: "布",
+          color: "#6BCB77",
+          glow: "rgba(107, 203, 119, 0.48)",
+          brightGlow: "rgba(134, 229, 146, 0.85)",
+          darkFill: "rgba(107, 203, 119, 0.16)",
+          beats: "rock",
+          losesTo: "scissors",
+        },
+      };
+
+      const FACTION_KEYS = ["scissors", "rock", "paper"];
+
+      /* ===========================
+         Unified Vector Icon System
+         Exact 1:1 geometry between inline SVG UI badges and Canvas unit rendering
+         Coordinate space: centered [-11, 11]
+         =========================== */
+      function getFactionSVG(type, size = 16) {
+        if (type === "scissors") {
+          return `<svg class="svg-icon" width="${size}" height="${size}" viewBox="-11 -11 22 22" aria-hidden="true">
+            <line x1="-0.2" y1="-0.6" x2="2.8" y2="3.0" stroke="#ffe4e6" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="0.2" y1="-0.6" x2="-2.8" y2="3.0" stroke="#ffe4e6" stroke-width="1.8" stroke-linecap="round"/>
+            <polygon points="-6.4,-7.6 -4.0,-6.8 0.8,-1.2 -0.8,0.2" fill="#fff1f2" stroke="#ffe4e6" stroke-width="0.6" stroke-linejoin="round"/>
+            <polygon points="6.4,-7.6 4.0,-6.8 -0.8,-1.2 0.8,0.2" fill="#fecdd3" stroke="#fff1f2" stroke-width="0.6" stroke-linejoin="round"/>
+            <circle cx="-4.2" cy="4.9" r="2.55" fill="none" stroke="#ffe4e6" stroke-width="1.85"/>
+            <circle cx="4.2" cy="4.9" r="2.55" fill="none" stroke="#ffe4e6" stroke-width="1.85"/>
+            <circle cx="0" cy="-0.8" r="1.2" fill="#FF6B6B" stroke="#fff1f2" stroke-width="0.75"/>
+          </svg>`;
+        }
+        if (type === "rock") {
+          return `<svg class="svg-icon" width="${size}" height="${size}" viewBox="-11 -11 22 22" aria-hidden="true">
+            <polygon points="-5.6,-5.0 -0.4,-8.0 6.0,-5.2 0.3,-1.0" fill="#f8fafc"/>
+            <polygon points="-7.6,2.0 -5.6,-5.0 0.3,-1.0 -4.2,7.2" fill="#dbeafe"/>
+            <polygon points="6.0,-5.2 7.8,1.4 3.6,7.2 0.3,-1.0" fill="#93c5fd"/>
+            <polygon points="0.3,-1.0 3.6,7.2 -4.2,7.2" fill="#60a5fa"/>
+            <polyline points="-5.6,-5.0 0.3,-1.0 6.0,-5.2" fill="none" stroke="rgba(239,246,255,0.65)" stroke-width="0.8"/>
+            <polyline points="-4.2,7.2 0.3,-1.0 3.6,7.2" fill="none" stroke="rgba(239,246,255,0.45)" stroke-width="0.8"/>
+            <polygon points="-7.6,2.0 -5.6,-5.0 -0.4,-8.0 6.0,-5.2 7.8,1.4 3.6,7.2 -4.2,7.2" fill="none" stroke="#eff6ff" stroke-width="1.05" stroke-linejoin="round"/>
+          </svg>`;
+        }
+        // Wavy square cloth (布巾) with flowing fabric ripples
+        return `<svg class="svg-icon" width="${size}" height="${size}" viewBox="-11 -11 22 22" aria-hidden="true">
+          <path d="M -6.6 -5.8 C -2.2 -7.8, 2.0 -3.8, 6.8 -6.0 C 8.0 -1.6, 5.0 2.2, 6.8 6.4 C 2.0 4.4, -2.2 8.2, -6.8 6.0 C -5.2 1.8, -8.0 -1.8, -6.6 -5.8 Z" fill="#dcfce7"/>
+          <path d="M -5.8 -2.3 C -1.8 -3.9, 1.8 0.2, 6.0 -1.6 L 6.3 1.4 C 1.8 3.2, -1.8 -0.8, -6.0 0.8 Z" fill="#86efac"/>
+          <path d="M -4.8 -4.0 C -1.2 -5.4, 2.0 -1.8, 5.4 -3.5" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round"/>
+          <path d="M -5.5 2.9 C -1.4 1.3, 1.8 4.8, 5.7 3.1" fill="none" stroke="#4ade80" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M -6.6 -5.8 C -2.2 -7.8, 2.0 -3.8, 6.8 -6.0 C 8.0 -1.6, 5.0 2.2, 6.8 6.4 C 2.0 4.4, -2.2 8.2, -6.8 6.0 C -5.2 1.8, -8.0 -1.8, -6.6 -5.8 Z" fill="none" stroke="#bbf7d0" stroke-width="1.05" stroke-linejoin="round"/>
+        </svg>`;
+      }
+
+      // Exact matching Canvas Path drawer in the same [-11, 11] coordinate system
+      function drawUnitIcon(ctx, type) {
+        ctx.save();
+        ctx.scale(0.84, 0.84);
+        if (type === "scissors") {
+          // Handle stems
+          ctx.strokeStyle = "#ffe4e6";
+          ctx.lineWidth = 1.8;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(-0.2, -0.6);
+          ctx.lineTo(2.8, 3.0);
+          ctx.moveTo(0.2, -0.6);
+          ctx.lineTo(-2.8, 3.0);
+          ctx.stroke();
+
+          // Blade 1 (left-top)
+          ctx.fillStyle = "#fff1f2";
+          ctx.strokeStyle = "#ffe4e6";
+          ctx.lineWidth = 0.6;
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          ctx.moveTo(-6.4, -7.6);
+          ctx.lineTo(-4.0, -6.8);
+          ctx.lineTo(0.8, -1.2);
+          ctx.lineTo(-0.8, 0.2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Blade 2 (right-top)
+          ctx.fillStyle = "#fecdd3";
+          ctx.strokeStyle = "#fff1f2";
+          ctx.beginPath();
+          ctx.moveTo(6.4, -7.6);
+          ctx.lineTo(4.0, -6.8);
+          ctx.lineTo(-0.8, -1.2);
+          ctx.lineTo(0.8, 0.2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Finger loops
+          ctx.strokeStyle = "#ffe4e6";
+          ctx.lineWidth = 1.85;
+          ctx.beginPath();
+          ctx.arc(-4.2, 4.9, 2.55, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(4.2, 4.9, 2.55, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Pivot screw
+          ctx.fillStyle = "#FF6B6B";
+          ctx.strokeStyle = "#fff1f2";
+          ctx.lineWidth = 0.75;
+          ctx.beginPath();
+          ctx.arc(0, -0.8, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else if (type === "rock") {
+          // Top highlight facet
+          ctx.fillStyle = "#f8fafc";
+          ctx.beginPath();
+          ctx.moveTo(-5.6, -5.0);
+          ctx.lineTo(-0.4, -8.0);
+          ctx.lineTo(6.0, -5.2);
+          ctx.lineTo(0.3, -1.0);
+          ctx.closePath();
+          ctx.fill();
+
+          // Left mid facet
+          ctx.fillStyle = "#dbeafe";
+          ctx.beginPath();
+          ctx.moveTo(-7.6, 2.0);
+          ctx.lineTo(-5.6, -5.0);
+          ctx.lineTo(0.3, -1.0);
+          ctx.lineTo(-4.2, 7.2);
+          ctx.closePath();
+          ctx.fill();
+
+          // Right facet
+          ctx.fillStyle = "#93c5fd";
+          ctx.beginPath();
+          ctx.moveTo(6.0, -5.2);
+          ctx.lineTo(7.8, 1.4);
+          ctx.lineTo(3.6, 7.2);
+          ctx.lineTo(0.3, -1.0);
+          ctx.closePath();
+          ctx.fill();
+
+          // Bottom shadow facet
+          ctx.fillStyle = "#60a5fa";
+          ctx.beginPath();
+          ctx.moveTo(0.3, -1.0);
+          ctx.lineTo(3.6, 7.2);
+          ctx.lineTo(-4.2, 7.2);
+          ctx.closePath();
+          ctx.fill();
+
+          // Internal ridge edges
+          ctx.strokeStyle = "rgba(239, 246, 255, 0.65)";
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(-5.6, -5.0);
+          ctx.lineTo(0.3, -1.0);
+          ctx.lineTo(6.0, -5.2);
+          ctx.moveTo(-4.2, 7.2);
+          ctx.lineTo(0.3, -1.0);
+          ctx.lineTo(3.6, 7.2);
+          ctx.stroke();
+
+          // Crisp outer outline
+          ctx.strokeStyle = "#eff6ff";
+          ctx.lineWidth = 1.05;
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+          ctx.moveTo(-7.6, 2.0);
+          ctx.lineTo(-5.6, -5.0);
+          ctx.lineTo(-0.4, -8.0);
+          ctx.lineTo(6.0, -5.2);
+          ctx.lineTo(7.8, 1.4);
+          ctx.lineTo(3.6, 7.2);
+          ctx.lineTo(-4.2, 7.2);
+          ctx.closePath();
+          ctx.stroke();
+        } else {
+          // Wavy square cloth path helper
+          const traceClothPerimeter = () => {
+            ctx.beginPath();
+            ctx.moveTo(-6.6, -5.8);
+            ctx.bezierCurveTo(-2.2, -7.8, 2.0, -3.8, 6.8, -6.0);
+            ctx.bezierCurveTo(8.0, -1.6, 5.0, 2.2, 6.8, 6.4);
+            ctx.bezierCurveTo(2.0, 4.4, -2.2, 8.2, -6.8, 6.0);
+            ctx.bezierCurveTo(-5.2, 1.8, -8.0, -1.8, -6.6, -5.8);
+            ctx.closePath();
+          };
+
+          traceClothPerimeter();
+          ctx.fillStyle = "#dcfce7";
+          ctx.fill();
+
+          // Soft mint wave shadow fold
+          ctx.fillStyle = "#86efac";
+          ctx.beginPath();
+          ctx.moveTo(-5.8, -2.3);
+          ctx.bezierCurveTo(-1.8, -3.9, 1.8, 0.2, 6.0, -1.6);
+          ctx.lineTo(6.3, 1.4);
+          ctx.bezierCurveTo(1.8, 3.2, -1.8, -0.8, -6.0, 0.8);
+          ctx.closePath();
+          ctx.fill();
+
+          // Highlight wave ridge
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 1.1;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(-4.8, -4.0);
+          ctx.bezierCurveTo(-1.2, -5.4, 2.0, -1.8, 5.4, -3.5);
+          ctx.stroke();
+
+          // Lower soft crease wave
+          ctx.strokeStyle = "#4ade80";
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(-5.5, 2.9);
+          ctx.bezierCurveTo(-1.4, 1.3, 1.8, 4.8, 5.7, 3.1);
+          ctx.stroke();
+
+          // Outer edge
+          traceClothPerimeter();
+          ctx.strokeStyle = "#bbf7d0";
+          ctx.lineWidth = 1.05;
+          ctx.lineJoin = "round";
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function populateStaticFactionSVGs() {
+        document.querySelectorAll(".faction-svg-slot").forEach((el) => {
+          const faction = el.dataset.faction;
+          const size = Number(el.dataset.size || 16);
+          el.innerHTML = getFactionSVG(faction, size);
+        });
+      }
+
+      const UI_ICONS = {
+        play: `<svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`,
+        pause: `<svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>`,
+        soundOn: `<svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`,
+        soundOff: `<svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`,
+        eye: `<svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
+        wall: `<svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line><line x1="12" y1="4" x2="12" y2="12"></line><line x1="8" y1="12" x2="8" y2="20"></line><line x1="16" y1="12" x2="16" y2="20"></line></svg>`,
+        lock: `<svg class="svg-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`,
+        shrinkDot: `<span class="badge-pulse-dot" style="display:inline-block;vertical-align:middle;"></span>`,
+      };
+
+      /* ===========================
+         DOM References
+         =========================== */
+      const simCanvas = document.getElementById("simCanvas");
+      const simCtx = simCanvas.getContext("2d");
+      const historyChart = document.getElementById("historyChart");
+      const chartCtx = historyChart.getContext("2d");
+
+      const statusPill = document.getElementById("statusPill");
+      const statusText = document.getElementById("statusText");
+      const muteBtn = document.getElementById("muteBtn");
+      const muteIcon = document.getElementById("muteIcon");
+      const muteLabel = document.getElementById("muteLabel");
+
+      const timerCard = document.getElementById("timerCard");
+      const shrinkTag = document.getElementById("shrinkTag");
+      const elapsedDisplay = document.getElementById("elapsedDisplay");
+      const assimDisplay = document.getElementById("assimDisplay");
+      const countScissorsEl = document.getElementById("countScissors");
+      const countRockEl = document.getElementById("countRock");
+      const countPaperEl = document.getElementById("countPaper");
+      const pctScissorsEl = document.getElementById("pctScissors");
+      const pctRockEl = document.getElementById("pctRock");
+      const pctPaperEl = document.getElementById("pctPaper");
+      const legendSEl = document.getElementById("legendS");
+      const legendREl = document.getElementById("legendR");
+      const legendPEl = document.getElementById("legendP");
+      const barScissorsEl = document.getElementById("barScissors");
+      const barRockEl = document.getElementById("barRock");
+      const barPaperEl = document.getElementById("barPaper");
+
+      const shrinkCanvasBadge = document.getElementById("shrinkCanvasBadge");
+      const modeIndicator = document.getElementById("modeIndicator");
+      const toolBtns = document.querySelectorAll(".tool-btn[data-mode]");
+      const clearWallsBtn = document.getElementById("clearWallsBtn");
+      const wallCountEl = document.getElementById("wallCount");
+
+      const startPauseBtn = document.getElementById("startPauseBtn");
+      const startPauseIcon = document.getElementById("startPauseIcon");
+      const startPauseLabel = document.getElementById("startPauseLabel");
+      const resetBtn = document.getElementById("resetBtn");
+
+      const betBlock = document.getElementById("betBlock");
+      const betBtns = document.querySelectorAll(".bet-btn[data-bet]");
+      const betStatusText = document.getElementById("betStatusText");
+
+      const initCountsBlock = document.getElementById("initCountsBlock");
+      const initScissorsSlider = document.getElementById("initScissors");
+      const initRockSlider = document.getElementById("initRock");
+      const initPaperSlider = document.getElementById("initPaper");
+      const initValScissors = document.getElementById("initValScissors");
+      const initValRock = document.getElementById("initValRock");
+      const initValPaper = document.getElementById("initValPaper");
+      const countApplyNote = document.getElementById("countApplyNote");
+
+      const moveSpeedSlider = document.getElementById("moveSpeedSlider");
+      const speedValLabel = document.getElementById("speedValLabel");
+      const senseRadiusSlider = document.getElementById("senseRadiusSlider");
+      const senseValLabel = document.getElementById("senseValLabel");
+      const speedBtns = document.querySelectorAll(".speed-btn[data-speed]");
+      const showSenseToggle = document.getElementById("showSenseToggle");
+
+      const victoryModal = document.getElementById("victoryModal");
+      const championBanner = document.getElementById("championBanner");
+      const championBadge = document.getElementById("championBadge");
+      const victoryTitle = document.getElementById("victoryTitle");
+      const victorySubtitle = document.getElementById("victorySubtitle");
+      const resTime = document.getElementById("resTime");
+      const resAssim = document.getElementById("resAssim");
+      const resBet = document.getElementById("resBet");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const playAgainBtn = document.getElementById("playAgainBtn");
+
+      /* ===========================
+         Web Audio Synthesizer
+         =========================== */
+      let audioCtx = null;
+      let isMuted = false;
+      let lastPopTimestamp = 0;
+
+      function ensureAudio() {
+        if (isMuted) return null;
+        if (!audioCtx) {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) return null;
+          audioCtx = new AudioCtor();
+        }
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {});
+        }
+        return audioCtx;
+      }
+
+      function playPopSound(winnerType) {
+        if (isMuted) return;
+        const nowMs = performance.now();
+        if (nowMs - lastPopTimestamp < 42) return;
+        lastPopTimestamp = nowMs;
+
+        const ctx = ensureAudio();
+        if (!ctx || ctx.state !== "running") return;
+
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        const basePitch =
+          winnerType === "scissors" ? 560 :
+          winnerType === "rock" ? 430 : 500;
+        const jitter = (Math.random() - 0.5) * 40;
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(basePitch * 0.68 + jitter, t);
+        osc.frequency.exponentialRampToValueAtTime(basePitch * 1.48 + jitter, t + 0.045);
+
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(0.11, t + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.075);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.08);
+      }
+
+      function playDropSound() {
+        if (isMuted) return;
+        const ctx = ensureAudio();
+        if (!ctx || ctx.state !== "running") return;
+
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(320, t);
+        osc.frequency.exponentialRampToValueAtTime(660, t + 0.08);
+
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(0.09, t + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.12);
+      }
+
+      function playVictorySound() {
+        if (isMuted) return;
+        const ctx = ensureAudio();
+        if (!ctx || ctx.state !== "running") return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        const base = ctx.currentTime;
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const start = base + idx * 0.075;
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0.001, start);
+          gain.gain.linearRampToValueAtTime(0.09, start + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.3);
+        });
+      }
+
+      /* ===========================
+         Simulation State
+         =========================== */
+      const state = {
+        phase: "idle", // "idle" | "running" | "paused" | "finished"
+        elapsedTime: 0,
+        assimilationCount: 0,
+        speedMultiplier: 1,
+        moveSpeed: 120,
+        senseRadius: 135,
+        showSenseRings: false,
+        initialCounts: { scissors: 25, rock: 25, paper: 25 },
+        prediction: null,
+        interactionMode: "observe",
+        units: [],
+        effects: [],
+        walls: [],
+        activeWall: null,
+        history: [],
+        lastHistorySample: -1,
+        lastFrameTs: 0,
+        chartAnimHandle: null,
+      };
+
+      /* ===========================
+         Canvas Setup (High-DPI)
+         =========================== */
+      function resizeCanvasDPI() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        simCanvas.width = LOGICAL_W * dpr;
+        simCanvas.height = LOGICAL_H * dpr;
+        simCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function getCanvasPoint(clientX, clientY) {
+        const rect = simCanvas.getBoundingClientRect();
+        return {
+          x: ((clientX - rect.left) / rect.width) * LOGICAL_W,
+          y: ((clientY - rect.top) / rect.height) * LOGICAL_H,
+        };
+      }
+
+      /* ===========================
+         Unit Creation & Spawning
+         =========================== */
+      function createUnit(type, x, y, flash = 0) {
+        const angle = Math.random() * Math.PI * 2;
+        return {
+          type,
+          x,
+          y,
+          vx: Math.cos(angle) * state.moveSpeed,
+          vy: Math.sin(angle) * state.moveSpeed,
+          wanderAngle: angle,
+          radius: UNIT_RADIUS,
+          flash,
+          isChasing: false,
+          chaseGlow: 0,
+          pulsePhase: Math.random() * Math.PI * 2,
+        };
+      }
+
+      function findSpawnSpot(preferredX, preferredY, scatter = 0) {
+        const pad = UNIT_RADIUS + 8;
+        let bestX = clamp(preferredX, pad, LOGICAL_W - pad);
+        let bestY = clamp(preferredY, pad, LOGICAL_H - pad);
+
+        for (let attempt = 0; attempt < 24; attempt++) {
+          const a = Math.random() * Math.PI * 2;
+          const r = scatter > 0 ? Math.random() * scatter : 0;
+          const cx = clamp(preferredX + Math.cos(a) * r, pad, LOGICAL_W - pad);
+          const cy = clamp(preferredY + Math.sin(a) * r, pad, LOGICAL_H - pad);
+
+          let blocked = false;
+          for (const u of state.units) {
+            const dx = u.x - cx;
+            const dy = u.y - cy;
+            if (dx * dx + dy * dy < (UNIT_RADIUS * 2.15) ** 2) {
+              blocked = true;
+              break;
+            }
+          }
+          if (!blocked && !isPointInsideWall(cx, cy, UNIT_RADIUS + WALL_HALF_WIDTH)) {
+            return { x: cx, y: cy };
+          }
+          bestX = cx;
+          bestY = cy;
+        }
+        return { x: bestX, y: bestY };
+      }
+
+      function spawnInitialPopulation() {
+        state.units = [];
+        for (const key of FACTION_KEYS) {
+          const count = state.initialCounts[key];
+          for (let i = 0; i < count; i++) {
+            const pad = UNIT_RADIUS + 18;
+            const rx = pad + Math.random() * (LOGICAL_W - pad * 2);
+            const ry = pad + Math.random() * (LOGICAL_H - pad * 2);
+            const spot = findSpawnSpot(rx, ry, 28);
+            state.units.push(createUnit(key, spot.x, spot.y, 0));
+          }
+        }
+        recordHistory(true);
+      }
+
+      function resetBattlefield({ keepWalls = true } = {}) {
+        state.phase = "idle";
+        state.elapsedTime = 0;
+        state.assimilationCount = 0;
+        state.effects = [];
+        state.history = [];
+        state.lastHistorySample = -1;
+        if (!keepWalls) {
+          state.walls = [];
+          state.activeWall = null;
+        }
+        victoryModal.classList.remove("open");
+        if (state.chartAnimHandle) {
+          cancelAnimationFrame(state.chartAnimHandle);
+          state.chartAnimHandle = null;
+        }
+        spawnInitialPopulation();
+        updateAllUI();
+        renderArena();
+      }
+
+      /* ===========================
+         Math & Geometry Helpers
+         =========================== */
+      function clamp(val, min, max) {
+        return val < min ? min : val > max ? max : val;
+      }
+
+      function getSafeRadius(t) {
+        if (t <= SHRINK_START_TIME) return MAX_SAFE_RADIUS;
+        const progress = Math.min(1, (t - SHRINK_START_TIME) / SHRINK_DURATION);
+        return MAX_SAFE_RADIUS - (MAX_SAFE_RADIUS - MIN_SAFE_RADIUS) * progress;
+      }
+
+      function closestPointOnSegment(px, py, ax, ay, bx, by) {
+        const abx = bx - ax;
+        const aby = by - ay;
+        const abLenSq = abx * abx + aby * aby;
+        if (abLenSq < 1e-6) return { x: ax, y: ay };
+        const t = clamp(((px - ax) * abx + (py - ay) * aby) / abLenSq, 0, 1);
+        return { x: ax + t * abx, y: ay + t * aby };
+      }
+
+      function isPointInsideWall(px, py, margin) {
+        for (const poly of state.walls) {
+          for (let i = 0; i < poly.length - 1; i++) {
+            const c = closestPointOnSegment(px, py, poly[i].x, poly[i].y, poly[i + 1].x, poly[i + 1].y);
+            const dx = px - c.x;
+            const dy = py - c.y;
+            if (dx * dx + dy * dy < margin * margin) return true;
+          }
+        }
+        return false;
+      }
+
+      function spawnAssimilationEffect(x, y, color, isAirdrop = false) {
+        state.effects.push({
+          kind: "ripple",
+          x,
+          y,
+          color,
+          radius: isAirdrop ? 6 : 10,
+          maxRadius: isAirdrop ? 42 : 46,
+          alpha: 0.95,
+          lineWidth: isAirdrop ? 3 : 2.5,
+        });
+
+        const count = isAirdrop ? 8 : 6;
+        for (let i = 0; i < count; i++) {
+          const a = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+          const spd = 45 + Math.random() * 65;
+          state.effects.push({
+            kind: "spark",
+            x,
+            y,
+            vx: Math.cos(a) * spd,
+            vy: Math.sin(a) * spd,
+            color,
+            size: 2 + Math.random() * 2,
+            alpha: 1,
+          });
+        }
+      }
+
+      /* ===========================
+         Physics & AI Step
+         =========================== */
+      function stepSimulation(dt) {
+        const units = state.units;
+        const n = units.length;
+        const senseSq = state.senseRadius * state.senseRadius;
+        const speed = state.moveSpeed;
+        const safeR = getSafeRadius(state.elapsedTime);
+        const shrinking = state.elapsedTime > SHRINK_START_TIME;
+        const cx = LOGICAL_W / 2;
+        const cy = LOGICAL_H / 2;
+
+        // 1. Smart AI Steering (Chase prey + Evade predator + Wander)
+        for (let i = 0; i < n; i++) {
+          const u = units[i];
+          const cfg = FACTIONS[u.type];
+
+          let nearestPrey = null;
+          let minPreyDistSq = senseSq;
+          let nearestPred = null;
+          let minPredDistSq = senseSq;
+
+          let sepX = 0;
+          let sepY = 0;
+          const personalDistSq = (UNIT_RADIUS * 2.6) ** 2;
+
+          for (let j = 0; j < n; j++) {
+            if (i === j) continue;
+            const other = units[j];
+            const dx = other.x - u.x;
+            const dy = other.y - u.y;
+            const dSq = dx * dx + dy * dy;
+
+            if (other.type === cfg.beats) {
+              if (dSq < minPreyDistSq) {
+                minPreyDistSq = dSq;
+                nearestPrey = other;
+              }
+            } else if (other.type === cfg.losesTo) {
+              if (dSq < minPredDistSq) {
+                minPredDistSq = dSq;
+                nearestPred = other;
+              }
+            } else if (dSq < personalDistSq && dSq > 0.01) {
+              const inv = 1 / Math.sqrt(dSq);
+              sepX -= dx * inv;
+              sepY -= dy * inv;
+            }
+          }
+
+          let steerX = 0;
+          let steerY = 0;
+          let hasTarget = false;
+
+          if (nearestPrey) {
+            const d = Math.sqrt(minPreyDistSq) || 1;
+            steerX += ((nearestPrey.x - u.x) / d) * 1.15;
+            steerY += ((nearestPrey.y - u.y) / d) * 1.15;
+            hasTarget = true;
+          }
+
+          if (nearestPred) {
+            const d = Math.sqrt(minPredDistSq) || 1;
+            const urgency = 0.95 + 1.15 * (1 - d / state.senseRadius);
+            steerX -= ((nearestPred.x - u.x) / d) * urgency;
+            steerY -= ((nearestPred.y - u.y) / d) * urgency;
+            hasTarget = true;
+          }
+
+          // Mark as actively hunting when prey is detected and net intent advances toward it
+          const toPreyDot = nearestPrey
+            ? steerX * (nearestPrey.x - u.x) + steerY * (nearestPrey.y - u.y)
+            : -1;
+          u.isChasing = nearestPrey !== null && (!nearestPred || toPreyDot > 0);
+          u.chaseGlow = clamp(
+            u.chaseGlow + (u.isChasing ? 1 : -1) * dt * 7.5,
+            0,
+            1
+          );
+
+          if (hasTarget) {
+            steerX += sepX * 0.22;
+            steerY += sepY * 0.22;
+          } else {
+            u.wanderAngle += (Math.random() - 0.5) * 4.2 * dt;
+            const curSpeed = Math.hypot(u.vx, u.vy);
+            if (curSpeed > 1e-3) {
+              const curAngle = Math.atan2(u.vy, u.vx);
+              const blended = curAngle + (Math.random() - 0.5) * 2.8 * dt;
+              steerX = Math.cos(blended);
+              steerY = Math.sin(blended);
+            } else {
+              steerX = Math.cos(u.wanderAngle);
+              steerY = Math.sin(u.wanderAngle);
+            }
+            steerX += sepX * 0.15;
+            steerY += sepY * 0.15;
+          }
+
+          if (shrinking) {
+            const dxC = u.x - cx;
+            const dyC = u.y - cy;
+            const dC = Math.hypot(dxC, dyC);
+            if (dC > safeR * 0.88 && dC > 1) {
+              const pull = clamp((dC - safeR * 0.88) / 36, 0.2, 2.2);
+              steerX -= (dxC / dC) * pull;
+              steerY -= (dyC / dC) * pull;
+            }
+          }
+
+          const sLen = Math.hypot(steerX, steerY);
+          if (sLen > 1e-4) {
+            const targetVx = (steerX / sLen) * speed;
+            const targetVy = (steerY / sLen) * speed;
+            const blend = clamp(8.5 * dt, 0, 1);
+            u.vx += (targetVx - u.vx) * blend;
+            u.vy += (targetVy - u.vy) * blend;
+          }
+
+          const vLen = Math.hypot(u.vx, u.vy);
+          if (vLen > 1e-3) {
+            u.vx = (u.vx / vLen) * speed;
+            u.vy = (u.vy / vLen) * speed;
+          } else {
+            const a = Math.random() * Math.PI * 2;
+            u.vx = Math.cos(a) * speed;
+            u.vy = Math.sin(a) * speed;
+          }
+        }
+
+        // 2. Integrate Positions & Boundary / Wall Collisions
+        for (let i = 0; i < n; i++) {
+          const u = units[i];
+          u.x += u.vx * dt;
+          u.y += u.vy * dt;
+
+          if (u.flash > 0) {
+            u.flash = Math.max(0, u.flash - dt * 2.8);
+          }
+
+          if (u.x < u.radius) {
+            u.x = u.radius;
+            u.vx = Math.abs(u.vx);
+          } else if (u.x > LOGICAL_W - u.radius) {
+            u.x = LOGICAL_W - u.radius;
+            u.vx = -Math.abs(u.vx);
+          }
+
+          if (u.y < u.radius) {
+            u.y = u.radius;
+            u.vy = Math.abs(u.vy);
+          } else if (u.y > LOGICAL_H - u.radius) {
+            u.y = LOGICAL_H - u.radius;
+            u.vy = -Math.abs(u.vy);
+          }
+
+          if (shrinking) {
+            const dxC = u.x - cx;
+            const dyC = u.y - cy;
+            const dC = Math.hypot(dxC, dyC);
+            const maxAllowed = Math.max(12, safeR - u.radius);
+            if (dC > maxAllowed && dC > 0.001) {
+              const nx = dxC / dC;
+              const ny = dyC / dC;
+              u.x = cx + nx * maxAllowed;
+              u.y = cy + ny * maxAllowed;
+              const radialVel = u.vx * nx + u.vy * ny;
+              if (radialVel > 0) {
+                u.vx -= 2 * radialVel * nx;
+                u.vy -= 2 * radialVel * ny;
+              }
+            }
+          }
+
+          const minWallDist = u.radius + WALL_HALF_WIDTH;
+          const minWallDistSq = minWallDist * minWallDist;
+          for (const poly of state.walls) {
+            for (let s = 0; s < poly.length - 1; s++) {
+              const pA = poly[s];
+              const pB = poly[s + 1];
+              const c = closestPointOnSegment(u.x, u.y, pA.x, pA.y, pB.x, pB.y);
+              const dx = u.x - c.x;
+              const dy = u.y - c.y;
+              const dSq = dx * dx + dy * dy;
+              if (dSq < minWallDistSq) {
+                const d = Math.sqrt(dSq);
+                let nx, ny;
+                if (d > 1e-4) {
+                  nx = dx / d;
+                  ny = dy / d;
+                } else {
+                  const segDx = pB.x - pA.x;
+                  const segDy = pB.y - pA.y;
+                  const segLen = Math.hypot(segDx, segDy) || 1;
+                  nx = -segDy / segLen;
+                  ny = segDx / segLen;
+                }
+                u.x = c.x + nx * minWallDist;
+                u.y = c.y + ny * minWallDist;
+
+                const vn = u.vx * nx + u.vy * ny;
+                if (vn < 0) {
+                  u.vx -= 2 * vn * nx;
+                  u.vy -= 2 * vn * ny;
+                }
+              }
+            }
+          }
+        }
+
+        // 3. Unit-to-Unit Collisions & Rock-Paper-Scissors Assimilation
+        const minDist = UNIT_RADIUS * 2;
+        const minDistSq = minDist * minDist;
+
+        for (let i = 0; i < n; i++) {
+          const a = units[i];
+          for (let j = i + 1; j < n; j++) {
+            const b = units[j];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dSq = dx * dx + dy * dy;
+
+            if (dSq >= minDistSq) continue;
+
+            const d = Math.sqrt(dSq);
+            let nx, ny;
+            if (d > 1e-4) {
+              nx = dx / d;
+              ny = dy / d;
+            } else {
+              const randA = Math.random() * Math.PI * 2;
+              nx = Math.cos(randA);
+              ny = Math.sin(randA);
+            }
+
+            const overlap = minDist - d;
+            a.x -= nx * overlap * 0.5;
+            a.y -= ny * overlap * 0.5;
+            b.x += nx * overlap * 0.5;
+            b.y += ny * overlap * 0.5;
+
+            const rvx = b.vx - a.vx;
+            const rvy = b.vy - a.vy;
+            const velAlongNormal = rvx * nx + rvy * ny;
+            if (velAlongNormal < 0) {
+              const impulse = -velAlongNormal;
+              a.vx -= impulse * nx;
+              a.vy -= impulse * ny;
+              b.vx += impulse * nx;
+              b.vy += impulse * ny;
+            }
+
+            if (FACTIONS[a.type].beats === b.type) {
+              b.type = a.type;
+              b.flash = 1.0;
+              b.isChasing = false;
+              b.chaseGlow = 0;
+              state.assimilationCount++;
+              spawnAssimilationEffect(b.x, b.y, FACTIONS[a.type].color);
+              playPopSound(a.type);
+            } else if (FACTIONS[b.type].beats === a.type) {
+              a.type = b.type;
+              a.flash = 1.0;
+              a.isChasing = false;
+              a.chaseGlow = 0;
+              state.assimilationCount++;
+              spawnAssimilationEffect(a.x, a.y, FACTIONS[b.type].color);
+              playPopSound(b.type);
+            }
+          }
+        }
+      }
+
+      function updateEffects(realDt) {
+        for (let i = state.effects.length - 1; i >= 0; i--) {
+          const ef = state.effects[i];
+          if (ef.kind === "ripple") {
+            ef.radius += (ef.maxRadius - ef.radius) * Math.min(1, realDt * 9);
+            ef.alpha -= realDt * 2.4;
+          } else {
+            ef.x += ef.vx * realDt;
+            ef.y += ef.vy * realDt;
+            ef.vx *= 0.94;
+            ef.vy *= 0.94;
+            ef.alpha -= realDt * 2.8;
+          }
+          if (ef.alpha <= 0.02) {
+            state.effects.splice(i, 1);
+          }
+        }
+      }
+
+      /* ===========================
+         Stats & Victory Detection
+         =========================== */
+      function getCounts() {
+        let scissors = 0, rock = 0, paper = 0;
+        for (const u of state.units) {
+          if (u.type === "scissors") scissors++;
+          else if (u.type === "rock") rock++;
+          else paper++;
+        }
+        return { scissors, rock, paper, total: state.units.length };
+      }
+
+      function recordHistory(force = false) {
+        if (!force && state.elapsedTime - state.lastHistorySample < 0.25) return;
+        const c = getCounts();
+        state.history.push({
+          t: Number(state.elapsedTime.toFixed(2)),
+          scissors: c.scissors,
+          rock: c.rock,
+          paper: c.paper,
+        });
+        state.lastHistorySample = state.elapsedTime;
+      }
+
+      function checkVictory() {
+        const c = getCounts();
+        if (c.total === 0) return null;
+        const aliveFactions = FACTION_KEYS.filter((k) => c[k] > 0);
+        if (aliveFactions.length === 1) {
+          return aliveFactions[0];
+        }
+        return null;
+      }
+
+      function handleVictory(winnerKey) {
+        state.phase = "finished";
+        recordHistory(true);
+        updateAllUI();
+        renderArena();
+        playVictorySound();
+
+        const f = FACTIONS[winnerKey];
+        championBanner.style.borderColor = f.color;
+        championBanner.style.background = `linear-gradient(135deg, ${f.darkFill}, var(--bg-card))`;
+        championBadge.innerHTML = getFactionSVG(winnerKey, 30);
+        championBadge.style.background = f.darkFill;
+        championBadge.style.border = `2px solid ${f.color}`;
+        championBadge.style.boxShadow = `0 0 24px ${f.glow}`;
+
+        victoryTitle.textContent = `${f.name}派統一全場！`;
+        victoryTitle.style.color = f.color;
+        victorySubtitle.textContent = `全場 ${state.units.length} 個單位已完成同化`;
+
+        resTime.textContent = `${state.elapsedTime.toFixed(1)} 秒`;
+        resAssim.textContent = `${state.assimilationCount} 次`;
+
+        resBet.className = "val bet-outcome";
+        if (!state.prediction) {
+          resBet.textContent = "未下注預測";
+          resBet.classList.add("none");
+        } else if (state.prediction === winnerKey) {
+          resBet.textContent = `預測成功！(${FACTIONS[state.prediction].name})`;
+          resBet.classList.add("win");
+        } else {
+          resBet.textContent = `預測失敗 (${FACTIONS[state.prediction].name})`;
+          resBet.classList.add("lose");
+        }
+
+        victoryModal.classList.add("open");
+        animateHistoryChart();
+      }
+
+      /* ===========================
+         Canvas Rendering
+         =========================== */
+      function drawBackgroundGrid() {
+        simCtx.fillStyle = "#080d1a";
+        simCtx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+
+        simCtx.strokeStyle = "rgba(148, 163, 184, 0.065)";
+        simCtx.lineWidth = 1;
+        simCtx.beginPath();
+        const step = 28;
+        for (let x = step; x < LOGICAL_W; x += step) {
+          simCtx.moveTo(x, 0);
+          simCtx.lineTo(x, LOGICAL_H);
+        }
+        for (let y = step; y < LOGICAL_H; y += step) {
+          simCtx.moveTo(0, y);
+          simCtx.lineTo(LOGICAL_W, y);
+        }
+        simCtx.stroke();
+
+        simCtx.strokeStyle = "rgba(148, 163, 184, 0.09)";
+        simCtx.beginPath();
+        simCtx.arc(LOGICAL_W / 2, LOGICAL_H / 2, 42, 0, Math.PI * 2);
+        simCtx.stroke();
+      }
+
+      function drawShrinkingZone() {
+        if (state.elapsedTime <= SHRINK_START_TIME) return;
+        const cx = LOGICAL_W / 2;
+        const cy = LOGICAL_H / 2;
+        const safeR = getSafeRadius(state.elapsedTime);
+
+        simCtx.save();
+        simCtx.fillStyle = "rgba(239, 68, 68, 0.13)";
+        simCtx.beginPath();
+        simCtx.rect(0, 0, LOGICAL_W, LOGICAL_H);
+        simCtx.arc(cx, cy, safeR, 0, Math.PI * 2, true);
+        simCtx.fill("evenodd");
+
+        const pulse = 0.7 + 0.3 * Math.sin(performance.now() * 0.006);
+        simCtx.strokeStyle = `rgba(239, 68, 68, ${pulse})`;
+        simCtx.lineWidth = 2.5;
+        simCtx.setLineDash([8, 6]);
+        simCtx.shadowColor = "rgba(239, 68, 68, 0.85)";
+        simCtx.shadowBlur = 14;
+        simCtx.beginPath();
+        simCtx.arc(cx, cy, safeR, 0, Math.PI * 2);
+        simCtx.stroke();
+        simCtx.restore();
+      }
+
+      function drawWalls() {
+        const allWalls = state.activeWall ? [...state.walls, state.activeWall] : state.walls;
+        if (allWalls.length === 0) return;
+
+        simCtx.save();
+        simCtx.lineCap = "round";
+        simCtx.lineJoin = "round";
+
+        for (const poly of allWalls) {
+          if (poly.length < 2) continue;
+
+          simCtx.strokeStyle = "rgba(245, 158, 11, 0.25)";
+          simCtx.lineWidth = WALL_HALF_WIDTH * 2 + 5;
+          simCtx.beginPath();
+          simCtx.moveTo(poly[0].x, poly[0].y);
+          for (let i = 1; i < poly.length; i++) simCtx.lineTo(poly[i].x, poly[i].y);
+          simCtx.stroke();
+
+          simCtx.strokeStyle = "#cbd5e1";
+          simCtx.lineWidth = WALL_HALF_WIDTH * 2;
+          simCtx.beginPath();
+          simCtx.moveTo(poly[0].x, poly[0].y);
+          for (let i = 1; i < poly.length; i++) simCtx.lineTo(poly[i].x, poly[i].y);
+          simCtx.stroke();
+
+          simCtx.strokeStyle = "#f8fafc";
+          simCtx.lineWidth = 2;
+          simCtx.stroke();
+        }
+        simCtx.restore();
+      }
+
+      function drawUnits() {
+        if (state.showSenseRings) {
+          simCtx.save();
+          simCtx.lineWidth = 1;
+          simCtx.setLineDash([4, 4]);
+          for (const u of state.units) {
+            const f = FACTIONS[u.type];
+            simCtx.strokeStyle = f.color;
+            simCtx.globalAlpha = 0.14;
+            simCtx.beginPath();
+            simCtx.arc(u.x, u.y, state.senseRadius, 0, Math.PI * 2);
+            simCtx.stroke();
+          }
+          simCtx.restore();
+        }
+
+        const nowMs = performance.now();
+
+        for (const u of state.units) {
+          const f = FACTIONS[u.type];
+          const r = u.radius + u.flash * 3;
+          const chase = u.chaseGlow || 0;
+          const breath = 0.5 + 0.5 * Math.sin(nowMs * 0.011 + (u.pulsePhase || 0));
+
+          simCtx.save();
+          simCtx.translate(u.x, u.y);
+
+          // Outer glow halo (expands and pulses smoothly while actively chasing prey)
+          const haloRadius = r * (1.72 + (0.68 + 0.28 * breath) * chase);
+          const glowGrad = simCtx.createRadialGradient(0, 0, r * 0.45, 0, 0, haloRadius);
+          glowGrad.addColorStop(
+            0,
+            u.flash > 0 ? "#ffffff" : chase > 0.2 ? f.brightGlow : f.glow
+          );
+          glowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+          simCtx.fillStyle = glowGrad;
+          simCtx.beginPath();
+          simCtx.arc(0, 0, haloRadius, 0, Math.PI * 2);
+          simCtx.fill();
+
+          // Chasing prey: pulsing breathing outer aura ring + forward pursuit chevron
+          if (chase > 0.05) {
+            simCtx.save();
+            simCtx.globalAlpha = (0.55 + 0.35 * breath) * chase;
+            simCtx.strokeStyle = f.color;
+            simCtx.lineWidth = 1.9;
+            simCtx.shadowColor = f.color;
+            simCtx.shadowBlur = 8 + 6 * breath;
+            simCtx.beginPath();
+            simCtx.arc(0, 0, r + 2.8 + 1.9 * breath, 0, Math.PI * 2);
+            simCtx.stroke();
+            simCtx.restore();
+          }
+
+          // Circular badge background
+          simCtx.fillStyle = "#111a2e";
+          simCtx.beginPath();
+          simCtx.arc(0, 0, r, 0, Math.PI * 2);
+          simCtx.fill();
+
+          simCtx.fillStyle = f.darkFill;
+          simCtx.beginPath();
+          simCtx.arc(0, 0, r, 0, Math.PI * 2);
+          simCtx.fill();
+
+          // Badge colored ring (thickens & glows brighter during active pursuit)
+          simCtx.save();
+          if (chase > 0.08) {
+            simCtx.shadowColor = f.color;
+            simCtx.shadowBlur = (10 + 6 * breath) * chase;
+          }
+          simCtx.strokeStyle = u.flash > 0.35 ? "#ffffff" : f.color;
+          simCtx.lineWidth = 1.9 + (1.9 + 0.65 * breath) * chase;
+          simCtx.beginPath();
+          simCtx.arc(0, 0, r, 0, Math.PI * 2);
+          simCtx.stroke();
+          simCtx.restore();
+
+          // Leading-edge direction indicator chevron when chasing prey
+          if (chase > 0.12 && (u.vx !== 0 || u.vy !== 0)) {
+            const heading = Math.atan2(u.vy, u.vx);
+            simCtx.save();
+            simCtx.rotate(heading);
+            simCtx.globalAlpha = Math.min(1, chase * 1.15);
+            simCtx.fillStyle = f.color;
+            simCtx.strokeStyle = "#f8fafc";
+            simCtx.lineWidth = 1.05;
+            simCtx.lineJoin = "round";
+            simCtx.shadowColor = f.color;
+            simCtx.shadowBlur = 6;
+            simCtx.beginPath();
+            simCtx.moveTo(r + 7.2, 0);
+            simCtx.lineTo(r + 1.4, -3.9);
+            simCtx.lineTo(r + 2.7, 0);
+            simCtx.lineTo(r + 1.4, 3.9);
+            simCtx.closePath();
+            simCtx.fill();
+            simCtx.stroke();
+            simCtx.restore();
+          }
+
+          // Crisp centered unified vector symbol
+          drawUnitIcon(simCtx, u.type);
+
+          simCtx.restore();
+        }
+      }
+
+      function drawEffects() {
+        for (const ef of state.effects) {
+          simCtx.save();
+          simCtx.globalAlpha = clamp(ef.alpha, 0, 1);
+          if (ef.kind === "ripple") {
+            simCtx.strokeStyle = ef.color;
+            simCtx.lineWidth = ef.lineWidth;
+            simCtx.beginPath();
+            simCtx.arc(ef.x, ef.y, ef.radius, 0, Math.PI * 2);
+            simCtx.stroke();
+          } else {
+            simCtx.fillStyle = ef.color;
+            simCtx.beginPath();
+            simCtx.arc(ef.x, ef.y, ef.size, 0, Math.PI * 2);
+            simCtx.fill();
+          }
+          simCtx.restore();
+        }
+      }
+
+      function renderArena() {
+        drawBackgroundGrid();
+        drawShrinkingZone();
+        drawWalls();
+        drawUnits();
+        drawEffects();
+      }
+
+      /* ===========================
+         Victory History Line Chart
+         =========================== */
+      function renderHistoryChart(progress = 1) {
+        const rect = historyChart.getBoundingClientRect();
+        const w = Math.max(300, rect.width || 580);
+        const h = Math.max(135, Math.round(rect.height) || 180);
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        historyChart.width = w * dpr;
+        historyChart.height = h * dpr;
+        chartCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        chartCtx.fillStyle = "#0a0f1d";
+        chartCtx.fillRect(0, 0, w, h);
+
+        const data = state.history;
+        if (!data || data.length === 0) return;
+
+        const padL = 42, padR = 16, padT = 16, padB = 30;
+        const plotW = w - padL - padR;
+        const plotH = h - padT - padB;
+
+        const maxT = Math.max(1, data[data.length - 1].t);
+        let maxY = 10;
+        for (const pt of data) {
+          maxY = Math.max(maxY, pt.scissors, pt.rock, pt.paper);
+        }
+        maxY = Math.ceil(maxY / 5) * 5;
+
+        chartCtx.font = "11px ui-monospace, Menlo, Consolas, monospace";
+        chartCtx.textAlign = "right";
+        chartCtx.textBaseline = "middle";
+        const yTicks = 4;
+        for (let i = 0; i <= yTicks; i++) {
+          const val = Math.round((maxY * i) / yTicks);
+          const py = padT + plotH - (plotH * i) / yTicks;
+          chartCtx.strokeStyle = "rgba(148, 163, 184, 0.14)";
+          chartCtx.lineWidth = 1;
+          chartCtx.beginPath();
+          chartCtx.moveTo(padL, py);
+          chartCtx.lineTo(w - padR, py);
+          chartCtx.stroke();
+
+          chartCtx.fillStyle = "#94a3b8";
+          chartCtx.fillText(String(val), padL - 6, py);
+        }
+
+        chartCtx.textAlign = "center";
+        chartCtx.textBaseline = "top";
+        const xTicks = 5;
+        for (let i = 0; i <= xTicks; i++) {
+          const tv = (maxT * i) / xTicks;
+          const px = padL + (plotW * i) / xTicks;
+          chartCtx.fillStyle = "#94a3b8";
+          chartCtx.fillText(`${tv.toFixed(0)}s`, px, padT + plotH + 8);
+        }
+
+        if (maxT > SHRINK_START_TIME) {
+          const mx = padL + (SHRINK_START_TIME / maxT) * plotW;
+          chartCtx.save();
+          chartCtx.strokeStyle = "rgba(239, 68, 68, 0.65)";
+          chartCtx.setLineDash([4, 4]);
+          chartCtx.beginPath();
+          chartCtx.moveTo(mx, padT);
+          chartCtx.lineTo(mx, padT + plotH);
+          chartCtx.stroke();
+          chartCtx.fillStyle = "#fca5a5";
+          chartCtx.textAlign = "left";
+          chartCtx.textBaseline = "top";
+          chartCtx.fillText("30s 縮圈", Math.min(mx + 4, w - 58), padT + 2);
+          chartCtx.restore();
+        }
+
+        chartCtx.save();
+        chartCtx.beginPath();
+        chartCtx.rect(padL - 2, padT - 4, (plotW + 4) * progress, plotH + 8);
+        chartCtx.clip();
+
+        for (const key of FACTION_KEYS) {
+          chartCtx.strokeStyle = FACTIONS[key].color;
+          chartCtx.lineWidth = 2.4;
+          chartCtx.lineJoin = "round";
+          chartCtx.lineCap = "round";
+          chartCtx.beginPath();
+          data.forEach((pt, idx) => {
+            const px = padL + (pt.t / maxT) * plotW;
+            const py = padT + plotH - (pt[key] / maxY) * plotH;
+            if (idx === 0) chartCtx.moveTo(px, py);
+            else chartCtx.lineTo(px, py);
+          });
+          chartCtx.stroke();
+        }
+        chartCtx.restore();
+      }
+
+      function animateHistoryChart() {
+        if (state.chartAnimHandle) cancelAnimationFrame(state.chartAnimHandle);
+        const start = performance.now();
+        const dur = 650;
+        const step = (now) => {
+          const p = clamp((now - start) / dur, 0, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          renderHistoryChart(eased);
+          if (p < 1) {
+            state.chartAnimHandle = requestAnimationFrame(step);
+          } else {
+            state.chartAnimHandle = null;
+          }
+        };
+        state.chartAnimHandle = requestAnimationFrame(step);
+      }
+
+      /* ===========================
+         UI Synchronization
+         =========================== */
+      function updateAllUI() {
+        const c = getCounts();
+        const total = Math.max(1, c.total);
+        const pS = (c.scissors / total) * 100;
+        const pR = (c.rock / total) * 100;
+        const pP = (c.paper / total) * 100;
+
+        elapsedDisplay.textContent = state.elapsedTime.toFixed(1);
+        assimDisplay.textContent = String(state.assimilationCount);
+
+        countScissorsEl.textContent = String(c.scissors);
+        countRockEl.textContent = String(c.rock);
+        countPaperEl.textContent = String(c.paper);
+
+        pctScissorsEl.textContent = `${Math.round(pS)}%`;
+        pctRockEl.textContent = `${Math.round(pR)}%`;
+        pctPaperEl.textContent = `${Math.round(pP)}%`;
+
+        legendSEl.textContent = String(c.scissors);
+        legendREl.textContent = String(c.rock);
+        legendPEl.textContent = String(c.paper);
+
+        barScissorsEl.style.width = `${pS}%`;
+        barRockEl.style.width = `${pR}%`;
+        barPaperEl.style.width = `${pP}%`;
+        barScissorsEl.textContent = pS >= 8 ? `${Math.round(pS)}%` : "";
+        barRockEl.textContent = pR >= 8 ? `${Math.round(pR)}%` : "";
+        barPaperEl.textContent = pP >= 8 ? `${Math.round(pP)}%` : "";
+
+        const isShrinking = state.elapsedTime > SHRINK_START_TIME && state.phase !== "finished";
+        timerCard.classList.toggle("timer-warning", isShrinking);
+        shrinkTag.innerHTML = isShrinking ? `${UI_ICONS.shrinkDot} 縮圈啟動中` : "30s 後縮圈";
+        shrinkCanvasBadge.classList.toggle("visible", isShrinking);
+
+        statusPill.className = "status-pill";
+        startPauseBtn.className = "btn-primary";
+
+        if (state.phase === "running") {
+          statusPill.classList.add(isShrinking ? "shrinking" : "running");
+          statusText.textContent = isShrinking ? "殘局縮圈交戰中" : "生態模擬進行中";
+          startPauseBtn.classList.add("paused-style");
+          startPauseIcon.innerHTML = UI_ICONS.pause;
+          startPauseLabel.textContent = "暫停模擬";
+        } else if (state.phase === "paused") {
+          statusPill.classList.add("paused");
+          statusText.textContent = "已暫停";
+          startPauseBtn.classList.add("resume-style");
+          startPauseIcon.innerHTML = UI_ICONS.play;
+          startPauseLabel.textContent = "繼續模擬";
+        } else if (state.phase === "finished") {
+          statusPill.classList.add("finished");
+          statusText.textContent = "勝負已分";
+          startPauseIcon.innerHTML = UI_ICONS.play;
+          startPauseLabel.textContent = "再來一局";
+        } else {
+          statusText.textContent = "準備就緒";
+          startPauseIcon.innerHTML = UI_ICONS.play;
+          startPauseLabel.textContent = "開始模擬";
+        }
+
+        // Lock prediction bet and initial count sliders once simulation has started
+        const roundLocked = state.phase !== "idle";
+        betBlock.classList.toggle("bet-locked", roundLocked);
+        betBtns.forEach((btn) => {
+          btn.disabled = roundLocked;
+          btn.classList.toggle("selected", btn.dataset.bet === state.prediction);
+        });
+        betStatusText.classList.toggle("locked", roundLocked);
+        if (roundLocked) {
+          const betDesc = state.prediction
+            ? `${FACTIONS[state.prediction].name}派`
+            : "未押寶";
+          betStatusText.innerHTML = `${UI_ICONS.lock} ${betDesc}（重置後可調整）`;
+        } else {
+          betStatusText.textContent = state.prediction
+            ? `已預測：${FACTIONS[state.prediction].name}派`
+            : "開局前可點擊預測霸主";
+        }
+
+        initCountsBlock.classList.toggle("sliders-locked", roundLocked);
+        initScissorsSlider.disabled = roundLocked;
+        initRockSlider.disabled = roundLocked;
+        initPaperSlider.disabled = roundLocked;
+        countApplyNote.classList.toggle("locked", roundLocked);
+        countApplyNote.innerHTML = roundLocked
+          ? `${UI_ICONS.lock} 重置後可調整`
+          : "即時預覽中";
+
+        wallCountEl.textContent = String(state.walls.length);
+        clearWallsBtn.disabled = state.walls.length === 0;
+      }
+
+      function updateModeUI() {
+        toolBtns.forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.mode === state.interactionMode);
+        });
+
+        simCanvas.classList.remove("mode-drop", "mode-wall");
+        if (state.interactionMode === "observe") {
+          modeIndicator.innerHTML = `${UI_ICONS.eye} <span>目前模式：觀察模式（切換下方工具可空投或畫牆）</span>`;
+        } else if (state.interactionMode === "wall") {
+          simCanvas.classList.add("mode-wall");
+          modeIndicator.innerHTML = `${UI_ICONS.wall} <span>目前模式：繪製障礙牆（按住滑鼠拖曳建牆）</span>`;
+        } else {
+          simCanvas.classList.add("mode-drop");
+          const key = state.interactionMode.replace("drop-", "");
+          const f = FACTIONS[key];
+          modeIndicator.innerHTML = `${getFactionSVG(key, 15)} <span>目前模式：空投${f.name}援軍（點擊畫布生成 3 個單位）</span>`;
+        }
+      }
+
+      function toggleStartPause() {
+        ensureAudio();
+        if (state.phase === "idle") {
+          if (checkVictory()) {
+            resetBattlefield({ keepWalls: true });
+          }
+          state.phase = "running";
+          recordHistory(true);
+        } else if (state.phase === "running") {
+          state.phase = "paused";
+        } else if (state.phase === "paused") {
+          state.phase = "running";
+        } else if (state.phase === "finished") {
+          resetBattlefield({ keepWalls: true });
+          state.phase = "running";
+        }
+        updateAllUI();
+      }
+
+      /* ===========================
+         Main Animation Loop
+         =========================== */
+      function mainLoop(now) {
+        if (!state.lastFrameTs) state.lastFrameTs = now;
+        const realDt = Math.min((now - state.lastFrameTs) / 1000, 0.05);
+        state.lastFrameTs = now;
+
+        if (state.phase === "running") {
+          const simDtTotal = realDt * state.speedMultiplier;
+          const substeps = Math.max(1, Math.ceil(simDtTotal / (1 / 90)));
+          const subDt = simDtTotal / substeps;
+
+          let winner = null;
+          for (let s = 0; s < substeps; s++) {
+            state.elapsedTime += subDt;
+            stepSimulation(subDt);
+            winner = checkVictory();
+            if (winner) break;
+          }
+
+          recordHistory(false);
+          updateEffects(realDt);
+          updateAllUI();
+          renderArena();
+
+          if (winner) {
+            handleVictory(winner);
+          }
+        } else {
+          if (state.effects.length > 0) {
+            updateEffects(realDt);
+          }
+          renderArena();
+        }
+
+        requestAnimationFrame(mainLoop);
+      }
+
+      /* ===========================
+         Event Listeners
+         =========================== */
+      startPauseBtn.addEventListener("click", toggleStartPause);
+
+      resetBtn.addEventListener("click", () => {
+        ensureAudio();
+        resetBattlefield({ keepWalls: true });
+      });
+
+      function toggleMute() {
+        isMuted = !isMuted;
+        muteBtn.classList.toggle("muted", isMuted);
+        muteIcon.innerHTML = isMuted ? UI_ICONS.soundOff : UI_ICONS.soundOn;
+        muteLabel.textContent = isMuted ? "已靜音" : "音效開啟";
+        if (!isMuted) ensureAudio();
+      }
+
+      // Keyboard Shortcuts: Space (Start/Pause), R (Reset), M (Mute), 1-4 (God-Hand modes)
+      window.addEventListener("keydown", (e) => {
+        const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "";
+        if (tag === "textarea" || (tag === "input" && e.target.type === "text")) return;
+
+        if (e.code === "Space") {
+          e.preventDefault();
+          if (e.repeat) return;
+          toggleStartPause();
+          return;
+        }
+
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+        if (e.code === "KeyR") {
+          if (e.repeat) return;
+          e.preventDefault();
+          ensureAudio();
+          resetBattlefield({ keepWalls: true });
+        } else if (e.code === "KeyM") {
+          if (e.repeat) return;
+          e.preventDefault();
+          toggleMute();
+        } else if (e.code === "Digit1" || e.code === "Numpad1") {
+          state.interactionMode = "drop-scissors";
+          updateModeUI();
+        } else if (e.code === "Digit2" || e.code === "Numpad2") {
+          state.interactionMode = "drop-rock";
+          updateModeUI();
+        } else if (e.code === "Digit3" || e.code === "Numpad3") {
+          state.interactionMode = "drop-paper";
+          updateModeUI();
+        } else if (e.code === "Digit4" || e.code === "Numpad4") {
+          state.interactionMode = "wall";
+          updateModeUI();
+        } else if (e.code === "Escape" && victoryModal.classList.contains("open")) {
+          victoryModal.classList.remove("open");
+        }
+      });
+
+      muteBtn.addEventListener("click", toggleMute);
+
+      betBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (state.phase !== "idle") return;
+          const chosen = btn.dataset.bet;
+          state.prediction = state.prediction === chosen ? null : chosen;
+          updateAllUI();
+        });
+      });
+
+      function bindInitSlider(slider, labelEl, key) {
+        slider.addEventListener("input", () => {
+          if (state.phase !== "idle") return;
+          const val = Number(slider.value);
+          state.initialCounts[key] = val;
+          labelEl.textContent = String(val);
+          spawnInitialPopulation();
+          updateAllUI();
+          renderArena();
+        });
+      }
+      bindInitSlider(initScissorsSlider, initValScissors, "scissors");
+      bindInitSlider(initRockSlider, initValRock, "rock");
+      bindInitSlider(initPaperSlider, initValPaper, "paper");
+
+      moveSpeedSlider.addEventListener("input", () => {
+        state.moveSpeed = Number(moveSpeedSlider.value);
+        speedValLabel.textContent = `${state.moveSpeed} px/s`;
+      });
+
+      senseRadiusSlider.addEventListener("input", () => {
+        state.senseRadius = Number(senseRadiusSlider.value);
+        senseValLabel.textContent = `${state.senseRadius} px`;
+      });
+
+      speedBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.speedMultiplier = Number(btn.dataset.speed);
+          speedBtns.forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+
+      showSenseToggle.addEventListener("change", () => {
+        state.showSenseRings = showSenseToggle.checked;
+        renderArena();
+      });
+
+      toolBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.interactionMode = btn.dataset.mode;
+          updateModeUI();
+        });
+      });
+
+      clearWallsBtn.addEventListener("click", () => {
+        state.walls = [];
+        state.activeWall = null;
+        updateAllUI();
+        renderArena();
+      });
+
+      let isDrawingWall = false;
+
+      simCanvas.addEventListener("pointerdown", (e) => {
+        ensureAudio();
+        const pt = getCanvasPoint(e.clientX, e.clientY);
+
+        if (state.interactionMode === "wall") {
+          isDrawingWall = true;
+          simCanvas.setPointerCapture(e.pointerId);
+          state.activeWall = [pt];
+          renderArena();
+          return;
+        }
+
+        if (state.interactionMode.startsWith("drop-")) {
+          if (state.phase === "finished") return;
+          const key = state.interactionMode.replace("drop-", "");
+          const f = FACTIONS[key];
+          for (let i = 0; i < 3; i++) {
+            const spot = findSpawnSpot(pt.x, pt.y, 26);
+            state.units.push(createUnit(key, spot.x, spot.y, 1.0));
+            spawnAssimilationEffect(spot.x, spot.y, f.color, true);
+          }
+          playDropSound();
+          recordHistory(true);
+          updateAllUI();
+          renderArena();
+        }
+      });
+
+      simCanvas.addEventListener("pointermove", (e) => {
+        if (!isDrawingWall || !state.activeWall) return;
+        const pt = getCanvasPoint(e.clientX, e.clientY);
+        const last = state.activeWall[state.activeWall.length - 1];
+        const distSq = (pt.x - last.x) ** 2 + (pt.y - last.y) ** 2;
+        if (distSq >= 100) {
+          state.activeWall.push({
+            x: clamp(pt.x, 4, LOGICAL_W - 4),
+            y: clamp(pt.y, 4, LOGICAL_H - 4),
+          });
+        }
+      });
+
+      function finishWallStroke(e) {
+        if (!isDrawingWall) return;
+        isDrawingWall = false;
+        if (e && simCanvas.hasPointerCapture && simCanvas.hasPointerCapture(e.pointerId)) {
+          try { simCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        if (state.activeWall && state.activeWall.length >= 2) {
+          state.walls.push(state.activeWall);
+        }
+        state.activeWall = null;
+        updateAllUI();
+        renderArena();
+      }
+
+      simCanvas.addEventListener("pointerup", finishWallStroke);
+      simCanvas.addEventListener("pointercancel", finishWallStroke);
+
+      closeModalBtn.addEventListener("click", () => {
+        victoryModal.classList.remove("open");
+      });
+
+      playAgainBtn.addEventListener("click", () => {
+        ensureAudio();
+        resetBattlefield({ keepWalls: true });
+      });
+
+      window.addEventListener("resize", () => {
+        resizeCanvasDPI();
+        renderArena();
+        if (victoryModal.classList.contains("open")) {
+          renderHistoryChart(1);
+        }
+      });
+
+      /* ===========================
+         Bootstrap
+         =========================== */
+      populateStaticFactionSVGs();
+      resizeCanvasDPI();
+      updateModeUI();
+      resetBattlefield({ keepWalls: false });
+      requestAnimationFrame(mainLoop);
+    })();
+  </script>
+</body>
+</html>
